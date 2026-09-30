@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 
 enum ProjectInfo {
     static let name = "DuckNorch"
-    static let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.1.0"
+    static let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.1.1"
     static let projectURL = URL(string: "https://github.com/LynnWang2/DuckNorch")!
     static let upstreamURL = URL(string: "https://github.com/mezhevikin/norch")!
     static let licenseURL = URL(string: "https://github.com/LynnWang2/DuckNorch/blob/main/LICENSE")!

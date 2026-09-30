@@ -10,26 +10,19 @@ let width = image.width, height = image.height
 // The supplied artwork includes a dark canvas around its rounded tile. Crop
 // that margin so the tile fills the macOS icon mask instead of appearing as a
 // second, smaller app icon inside the system-rounded icon.
-let cropSide = CGFloat(min(width, height)) * 0.875
-let cropRect = CGRect(x: (CGFloat(width) - cropSide) / 2,
-                      y: (CGFloat(height) - cropSide) / 2,
-                      width: cropSide, height: cropSide)
-guard let cropped = image.cropping(to: cropRect.integral) else {
-    fatalError("Could not crop icon canvas")
-}
 guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB),
       let context = CGContext(data: nil, width: width, height: height,
                               bitsPerComponent: 8, bytesPerRow: 0, space: colorSpace,
                               bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
     fatalError("Could not create icon canvas")
 }
-// Blend the artwork's transparent corners into its charcoal tile so macOS
-// applies its standard icon mask exactly once, with no second inset tile.
+// Keep the artwork square and opaque. The system applies the only outer
+// rounded-corner mask when displaying the icon.
 context.setFillColor(CGColor(srgbRed: 24.0 / 255, green: 25.0 / 255, blue: 30.0 / 255, alpha: 1))
 context.fill(CGRect(x: 0, y: 0, width: width, height: height))
 context.setBlendMode(.normal)
 context.interpolationQuality = .high
-context.draw(cropped, in: CGRect(x: 0, y: 0, width: width, height: height))
+context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
 guard let flattened = context.makeImage(),
       let destination = CGImageDestinationCreateWithURL(
         URL(fileURLWithPath: CommandLine.arguments[2]) as CFURL, "public.png" as CFString, 1, nil) else {
