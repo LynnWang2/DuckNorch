@@ -1,0 +1,346 @@
+import SwiftUI
+import AppKit
+import UniformTypeIdentifiers
+
+enum ProjectInfo {
+    static let name = "DuckNorth"
+    static let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
+    static let projectURL = URL(string: "https://github.com/LynnWang2/DuckNorth")!
+    static let upstreamURL = URL(string: "https://github.com/mezhevikin/norch")!
+    static let licenseURL = URL(string: "https://github.com/LynnWang2/DuckNorth/blob/main/LICENSE")!
+    @MainActor static var icon: NSImage {
+        if let url = Bundle.main.url(forResource: "AppIcon", withExtension: "png"),
+           let image = NSImage(contentsOf: url) { return image }
+        return NSImage(named: NSImage.applicationIconName) ?? NSImage()
+    }
+}
+
+@MainActor final class WallpaperModel: ObservableObject {
+    @Published var input: URL?
+    @Published var output: URL?
+    @Published var preview: NSImage?
+    @Published var busy = false
+    @Published var targeted = false
+    @Published var status = "选择一张喜欢的壁纸，剩下的交给 DuckNorth。"
+    @Published var error: String?
+    @Published var folder: URL
+    @Published var details = ""
+    private var renderedGeometry: ScreenGeometry?
+    private var screenID: String?
+
+    init() {
+        if let stored = UserDefaults.standard.url(forKey: "outputFolder") { folder = stored }
+        else {
+            folder = (FileManager.default.urls(for: .picturesDirectory, in: .userDomainMask).first
+                      ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Pictures"))
+                .appendingPathComponent("DuckNorth", isDirectory: true)
+        }
+    }
+
+    func chooseImage() {
+        guard !busy else { return }
+        let panel = NSOpenPanel()
+        panel.title = "选择壁纸"
+        panel.prompt = "生成壁纸"
+        panel.allowedContentTypes = [.image]
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        if panel.runModal() == .OK, let url = panel.url { select(url) }
+    }
+
+    func chooseFolder() {
+        guard !busy else { return }
+        let panel = NSOpenPanel()
+        panel.title = "选择结果保存文件夹"
+        panel.prompt = "保存到这里"
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = true
+        panel.directoryURL = folder
+        if panel.runModal() == .OK, let url = panel.url {
+            folder = url
+            UserDefaults.standard.set(url, forKey: "outputFolder")
+            if let input { select(input) }
+        }
+    }
+
+    func select(_ url: URL) {
+        guard !busy else { return }
+        input = url
+        output = nil
+        preview = nil
+        details = ""
+        generate(applyAfter: false)
+    }
+
+    private func displayID(_ screen: NSScreen) -> String {
+        String(describing: screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] ?? "")
+    }
+
+    func generate(applyAfter: Bool) {
+        guard !busy, let input else { return }
+        // The first screen owns the primary menu bar. NSScreen.main may follow the active window.
+        guard let screen = NSScreen.screens.first else {
+            error = "未检测到可用屏幕。"; return
+        }
+        let geometry = ScreenGeometry.read(from: screen)
+        let id = displayID(screen)
+        let targetFolder = folder
+        busy = true
+        status = "正在生成壁纸…"
+        error = nil
+        Task {
+            do {
+                let result = try await Task.detached(priority: .userInitiated) {
+                    try autoreleasepool { try WallpaperEngine.render(input: input, folder: targetFolder, geometry: geometry) }
+                }.value
+                output = result
+                preview = NSImage(contentsOf: result)
+                renderedGeometry = geometry
+                screenID = id
+                details = "\(screen.localizedName) · \(geometry.width) × \(geometry.height)"
+                status = "PNG 已保存，原图保持不变。"
+                busy = false
+                if applyAfter { applyWallpaper() }
+            } catch {
+                busy = false
+                self.error = error.localizedDescription
+                status = "未能生成壁纸。可重新选图或更换保存文件夹。"
+            }
+        }
+    }
+
+    func applyWallpaper() {
+        guard !busy, let output else { return }
+        guard let screen = NSScreen.screens.first else { error = "未检测到可用屏幕。"; return }
+        guard FileManager.default.fileExists(atPath: output.path) else {
+            generate(applyAfter: true); return
+        }
+        let current = ScreenGeometry.read(from: screen)
+        guard current == renderedGeometry, displayID(screen) == screenID else {
+            generate(applyAfter: true); return
+        }
+        do {
+            try NSWorkspace.shared.setDesktopImageURL(output, for: screen, options: [
+                .imageScaling: NSImageScaling.scaleAxesIndependently.rawValue,
+                .allowClipping: false
+            ])
+            status = "已设为桌面壁纸，现在可以关闭 DuckNorth。"
+            error = nil
+        } catch {
+            self.error = "PNG 已保存，但设置桌面壁纸失败：\(error.localizedDescription)"
+        }
+    }
+
+    func reveal() {
+        if let output { NSWorkspace.shared.activateFileViewerSelecting([output]) }
+    }
+
+    func receive(_ providers: [NSItemProvider]) -> Bool {
+        guard !busy, let item = providers.first(where: { $0.canLoadObject(ofClass: NSURL.self) }) else { return false }
+        item.loadObject(ofClass: NSURL.self) { value, _ in
+            let url = value as? URL
+            Task { @MainActor in
+                if let url, url.isFileURL { self.select(url) }
+                else { self.error = "请从访达拖入一张图片文件。" }
+            }
+        }
+        return true
+    }
+}
+
+struct ContentView: View {
+    @ObservedObject var model: WallpaperModel
+    private let accent = Color(red: 0.27, green: 0.40, blue: 0.90)
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HStack(alignment: .center, spacing: 14) {
+                Image(nsImage: ProjectInfo.icon).resizable().scaledToFit()
+                    .frame(width: 58, height: 58).accessibilityLabel("DuckNorth 图标")
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("DuckNorth").font(.system(size: 27, weight: .semibold))
+                    Text("让刘海融入壁纸").font(.system(size: 13)).foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button(model.input == nil ? "选择壁纸…" : "换一张…", action: model.chooseImage)
+                    .disabled(model.busy).keyboardShortcut("o", modifiers: .command)
+            }
+
+            ZStack {
+                RoundedRectangle(cornerRadius: 18).fill(Color(nsColor: .controlBackgroundColor))
+                if let preview = model.preview {
+                    Image(nsImage: preview).resizable().aspectRatio(contentMode: .fit)
+                        .padding(16).accessibilityLabel("处理后的壁纸预览")
+                } else {
+                    VStack(spacing: 14) {
+                        Image(systemName: "photo.on.rectangle.angled").font(.system(size: 36, weight: .light)).foregroundStyle(accent.opacity(0.8))
+                        Text(model.busy ? "正在处理图片" : "将图片拖到这里").font(.system(size: 17, weight: .medium))
+                        Text("也可以点击右上角选择壁纸\n支持 JPG、PNG、HEIC、TIFF 等图片")
+                            .font(.system(size: 12)).foregroundStyle(.secondary).multilineTextAlignment(.center).lineSpacing(4)
+                    }
+                }
+                if model.busy {
+                    RoundedRectangle(cornerRadius: 18).fill(.regularMaterial)
+                    ProgressView("正在生成…")
+                }
+                RoundedRectangle(cornerRadius: 18).strokeBorder(model.targeted ? accent : Color.primary.opacity(0.09),
+                                                                style: StrokeStyle(lineWidth: model.targeted ? 2 : 1, dash: model.preview == nil ? [6, 4] : []))
+            }
+            .frame(height: 270)
+            .onDrop(of: [.fileURL], isTargeted: $model.targeted, perform: model.receive)
+            .accessibilityLabel("壁纸预览和图片拖放区域")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { model.chooseImage() }
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text(model.input?.lastPathComponent ?? "顶部纯黑 · 系统圆角 · 自动适配主屏幕")
+                        .font(.system(size: 12, weight: .medium)).lineLimit(1).truncationMode(.middle)
+                    Spacer()
+                    Text(model.details).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+                }
+                Text(model.status).font(.system(size: 12)).foregroundStyle(.secondary)
+                    .accessibilityLabel(model.status)
+            }
+            HStack(spacing: 12) {
+                Button(action: model.applyWallpaper) {
+                    Label("设为桌面壁纸", systemImage: "desktopcomputer").padding(.horizontal, 10)
+                }.buttonStyle(.borderedProminent).tint(accent).controlSize(.large)
+                    .disabled(model.output == nil || model.busy)
+                    .keyboardShortcut(.return, modifiers: [])
+                Button("在访达中显示", action: model.reveal).controlSize(.large)
+                    .disabled(model.output == nil || model.busy)
+                Spacer()
+            }
+            Divider()
+            HStack(spacing: 6) {
+                Image(systemName: "folder").foregroundStyle(.secondary)
+                Text("保存到：\(model.folder.path.replacingOccurrences(of: FileManager.default.homeDirectoryForCurrentUser.path, with: "~"))")
+                    .lineLimit(1).truncationMode(.middle).help(model.folder.path)
+                Spacer(minLength: 8)
+                Button("更改…", action: model.chooseFolder).buttonStyle(.link).disabled(model.busy)
+            }.font(.system(size: 11)).foregroundStyle(.secondary)
+            Text("原图不覆盖，每次生成独立 PNG。关闭窗口即退出，无需后台运行。")
+                .font(.system(size: 11)).foregroundStyle(.tertiary)
+        }
+        .padding(28).frame(width: 650)
+        .background(Color(nsColor: .windowBackgroundColor))
+        .alert("DuckNorth", isPresented: Binding(get: { model.error != nil }, set: { if !$0 { model.error = nil } })) {
+            Button("好", role: .cancel) { model.error = nil }
+        } message: { Text(model.error ?? "") }
+    }
+}
+
+struct AboutView: View {
+    var body: some View {
+        VStack(alignment: .center, spacing: 16) {
+            Image(nsImage: ProjectInfo.icon).resizable().scaledToFit()
+                .frame(width: 112, height: 112).accessibilityLabel("DuckNorth 图标")
+            VStack(spacing: 6) {
+                Text(ProjectInfo.name).font(.system(size: 25, weight: .semibold))
+                Text("版本 \(ProjectInfo.version)").font(.system(size: 13)).foregroundStyle(.secondary)
+            }
+            VStack(spacing: 14) {
+                VStack(spacing: 4) {
+                    Text("项目链接").font(.system(size: 12)).foregroundStyle(.secondary)
+                    Link("github.com/LynnWang2/DuckNorth", destination: ProjectInfo.projectURL)
+                }
+                VStack(spacing: 4) {
+                    Text("原项目链接").font(.system(size: 12)).foregroundStyle(.secondary)
+                    Link("github.com/mezhevikin/norch", destination: ProjectInfo.upstreamURL)
+                }
+                VStack(spacing: 4) {
+                    Text("开源协议").font(.system(size: 12)).foregroundStyle(.secondary)
+                    Link("MIT License", destination: ProjectInfo.licenseURL)
+                }
+            }.font(.system(size: 13))
+        }
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 28).padding(.vertical, 32)
+        .frame(width: 420)
+        .background(Color(nsColor: .windowBackgroundColor))
+    }
+}
+
+@MainActor final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+    let model = WallpaperModel()
+    var window: NSWindow!
+    var aboutWindow: NSWindow?
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.setActivationPolicy(.regular)
+        let hosting = NSHostingView(rootView: ContentView(model: model))
+        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 650, height: 620),
+                          styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
+        window.title = "DuckNorth"
+        window.contentView = hosting
+        window.setContentSize(hosting.fittingSize)
+        window.center()
+        window.delegate = self
+        window.isReleasedWhenClosed = false
+        makeMenus()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+    func windowWillClose(_ notification: Notification) {
+        if let closed = notification.object as? NSWindow, closed === window {
+            NSApp.terminate(nil)
+        }
+    }
+    func application(_ sender: NSApplication, open urls: [URL]) {
+        if let first = urls.first { model.select(first) }
+    }
+    @objc func choose() { model.chooseImage() }
+    @objc func apply() { model.applyWallpaper() }
+    @objc func help() {
+        if let url = Bundle.main.url(forResource: "使用说明", withExtension: "txt") { NSWorkspace.shared.open(url) }
+    }
+    @objc func about() {
+        if let aboutWindow { aboutWindow.makeKeyAndOrderFront(nil); return }
+        let view = NSHostingView(rootView: AboutView())
+        let panel = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 420, height: 430),
+                             styleMask: [.titled, .closable], backing: .buffered, defer: false)
+        panel.title = "关于 DuckNorth"
+        panel.contentView = view
+        panel.setContentSize(view.fittingSize)
+        panel.isReleasedWhenClosed = false
+        panel.center()
+        panel.makeKeyAndOrderFront(nil)
+        aboutWindow = panel
+    }
+    private func makeMenus() {
+        let bar = NSMenu()
+        let app = NSMenu()
+        app.addItem(withTitle: "关于 DuckNorth", action: #selector(about), keyEquivalent: "").target = self
+        app.addItem(.separator())
+        app.addItem(withTitle: "隐藏 DuckNorth", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        app.addItem(.separator())
+        app.addItem(withTitle: "退出 DuckNorth", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        let appItem = NSMenuItem(); appItem.submenu = app; bar.addItem(appItem)
+        let file = NSMenu(title: "文件")
+        file.addItem(withTitle: "选择壁纸…", action: #selector(choose), keyEquivalent: "o").target = self
+        file.addItem(withTitle: "设为桌面壁纸", action: #selector(apply), keyEquivalent: "") .target = self
+        file.addItem(.separator())
+        file.addItem(withTitle: "关闭窗口", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        let fileItem = NSMenuItem(title: "文件", action: nil, keyEquivalent: ""); fileItem.submenu = file; bar.addItem(fileItem)
+        let help = NSMenu(title: "帮助")
+        help.addItem(withTitle: "DuckNorth 使用说明", action: #selector(self.help), keyEquivalent: "").target = self
+        let helpItem = NSMenuItem(title: "帮助", action: nil, keyEquivalent: ""); helpItem.submenu = help; bar.addItem(helpItem)
+        NSApp.mainMenu = bar
+    }
+}
+
+#if !DUCKNORTH_TESTING
+@main struct DuckNorthMain {
+    @MainActor static func main() {
+        let application = NSApplication.shared
+        let delegate = AppDelegate()
+        application.delegate = delegate
+        withExtendedLifetime(delegate) { application.run() }
+    }
+}
+#endif
