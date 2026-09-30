@@ -214,16 +214,15 @@ struct ContentView: View {
             VStack(alignment: .center, spacing: 10) {
                 Button(action: model.applyWallpaper) {
                     Label("设为桌面壁纸", systemImage: "desktopcomputer")
-                        .font(.system(size: 22, weight: .semibold))
-                        .frame(minHeight: 70)
-                        .padding(.horizontal, 32)
+                        .font(.system(size: 24, weight: .semibold))
+                        .frame(width: 230, height: 56)
                 }.buttonStyle(.borderedProminent).tint(accent).controlSize(.large)
                     .disabled(model.output == nil || model.busy)
                     .keyboardShortcut(.return, modifiers: [])
                 Button(action: model.reveal) {
                     Label("在访达中显示", systemImage: "folder")
                         .font(.system(size: 16, weight: .medium))
-                        .frame(minHeight: 46)
+                        .frame(minHeight: 38)
                         .padding(.horizontal, 18)
                 }.buttonStyle(.bordered).controlSize(.large)
                     .disabled(model.output == nil || model.busy)
