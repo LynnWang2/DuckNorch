@@ -155,23 +155,17 @@ struct ContentView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            HStack(alignment: .center, spacing: 14) {
+            HStack(alignment: .center, spacing: 16) {
                 Image(nsImage: ProjectInfo.icon).resizable().scaledToFit()
-                    .frame(width: 58, height: 58)
-                    .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    .frame(width: 72, height: 72)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                     .accessibilityLabel("DuckNorth 图标")
-                VStack(alignment: .leading, spacing: 5) {
-                    Text("DuckNorth").font(.system(size: 27, weight: .semibold))
-                    Text("让刘海融入壁纸").font(.system(size: 13)).foregroundStyle(.secondary)
+                VStack(alignment: .center, spacing: 5) {
+                    Text("DuckNorth").font(.system(size: 29, weight: .semibold))
+                    Text("让刘海融入壁纸").font(.system(size: 15)).foregroundStyle(.secondary)
                 }
-                Spacer()
-                Button(model.input == nil ? "选择壁纸…" : "换一张…", action: model.chooseImage)
-                    .font(.system(size: 14, weight: .semibold))
-                    .controlSize(.large)
-                    .padding(.horizontal, 8)
-                    .frame(minHeight: 48)
-                    .disabled(model.busy).keyboardShortcut("o", modifiers: .command)
             }
+            .frame(maxWidth: .infinity, alignment: .center)
 
             ZStack {
                 RoundedRectangle(cornerRadius: 18).fill(Color(nsColor: .controlBackgroundColor))
@@ -181,8 +175,9 @@ struct ContentView: View {
                 } else {
                     VStack(spacing: 14) {
                         Image(systemName: "photo.on.rectangle.angled").font(.system(size: 36, weight: .light)).foregroundStyle(accent.opacity(0.8))
-                        Text(model.busy ? "正在处理图片" : "将图片拖到这里").font(.system(size: 17, weight: .medium))
-                        Text("也可以点击右上角选择壁纸\n支持 JPG、PNG、HEIC、TIFF 等图片")
+                        Text(model.busy ? "正在处理图片" : "拖入图片，或点击此处选择壁纸")
+                            .font(.system(size: 17, weight: .medium))
+                        Text("支持 JPG、PNG、HEIC、TIFF 等图片")
                             .font(.system(size: 12)).foregroundStyle(.secondary).multilineTextAlignment(.center).lineSpacing(4)
                     }
                 }
@@ -194,8 +189,11 @@ struct ContentView: View {
                                                                 style: StrokeStyle(lineWidth: model.targeted ? 2 : 1, dash: model.preview == nil ? [6, 4] : []))
             }
             .frame(height: 270)
+            .contentShape(RoundedRectangle(cornerRadius: 18))
             .onDrop(of: [.fileURL], isTargeted: $model.targeted, perform: model.receive)
-            .accessibilityLabel("壁纸预览和图片拖放区域")
+            .onTapGesture { if !model.busy { model.chooseImage() } }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("拖入图片，或点击此处选择壁纸")
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { model.chooseImage() }
 
