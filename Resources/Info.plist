@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-    <key>CFBundleExecutable</key><string>DuckNorth</string>
-    <key>CFBundleIdentifier</key><string>io.github.LynnWang2.DuckNorth</string>
-    <key>CFBundleName</key><string>DuckNorth</string>
-    <key>CFBundleDisplayName</key><string>DuckNorth</string>
+    <key>CFBundleExecutable</key><string>DuckNorch</string>
+    <key>CFBundleIdentifier</key><string>io.github.LynnWang2.DuckNorch</string>
+    <key>CFBundleName</key><string>DuckNorch</string>
+    <key>CFBundleDisplayName</key><string>DuckNorch</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>1.0.1</string>
-    <key>CFBundleVersion</key><string>2</string>
-    <key>CFBundleIconFile</key><string>DuckNorth</string>
+    <key>CFBundleShortVersionString</key><string>1.1.0</string>
+    <key>CFBundleVersion</key><string>3</string>
+    <key>CFBundleIconFile</key><string>DuckNorch</string>
     <key>LSMinimumSystemVersion</key><string>27.0</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSPrincipalClass</key><string>NSApplication</string>

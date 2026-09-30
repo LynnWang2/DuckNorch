@@ -12,7 +12,7 @@ func render(_ size: Int) throws -> Data {
                                      bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
                                      isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0),
           let context = NSGraphicsContext(bitmapImageRep: rep) else {
-        throw NSError(domain: "DuckNorth.Icon", code: 1)
+        throw NSError(domain: "DuckNorch.Icon", code: 1)
     }
     NSGraphicsContext.saveGraphicsState()
     defer { NSGraphicsContext.restoreGraphicsState() }
@@ -21,7 +21,7 @@ func render(_ size: Int) throws -> Data {
     source.draw(in: NSRect(x: 0, y: 0, width: size, height: size), from: .zero,
                 operation: .copy, fraction: 1, respectFlipped: false, hints: nil)
     guard let png = rep.representation(using: .png, properties: [:]) else {
-        throw NSError(domain: "DuckNorth.Icon", code: 2)
+        throw NSError(domain: "DuckNorch.Icon", code: 2)
     }
     return png
 }

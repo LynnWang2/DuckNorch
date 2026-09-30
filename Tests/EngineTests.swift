@@ -3,7 +3,7 @@ import ImageIO
 import UniformTypeIdentifiers
 
 func require(_ value: Bool, _ message: String) throws {
-    if !value { throw DuckNorthError.message("TEST FAILED: " + message) }
+    if !value { throw DuckNorchError.message("TEST FAILED: " + message) }
 }
 
 func fixture(_ url: URL, width: Int, height: Int, orientation: Int = 1) throws {

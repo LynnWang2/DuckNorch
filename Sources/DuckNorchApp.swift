@@ -3,11 +3,11 @@ import AppKit
 import UniformTypeIdentifiers
 
 enum ProjectInfo {
-    static let name = "DuckNorth"
-    static let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.1"
-    static let projectURL = URL(string: "https://github.com/LynnWang2/DuckNorth")!
+    static let name = "DuckNorch"
+    static let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.1.0"
+    static let projectURL = URL(string: "https://github.com/LynnWang2/DuckNorch")!
     static let upstreamURL = URL(string: "https://github.com/mezhevikin/norch")!
-    static let licenseURL = URL(string: "https://github.com/LynnWang2/DuckNorth/blob/main/LICENSE")!
+    static let licenseURL = URL(string: "https://github.com/LynnWang2/DuckNorch/blob/main/LICENSE")!
     @MainActor static var icon: NSImage {
         if let url = Bundle.main.url(forResource: "AppIcon", withExtension: "png"),
            let image = NSImage(contentsOf: url) { return image }
@@ -21,7 +21,7 @@ enum ProjectInfo {
     @Published var preview: NSImage?
     @Published var busy = false
     @Published var targeted = false
-    @Published var status = "选择一张喜欢的壁纸，剩下的交给 DuckNorth。"
+    @Published var status = "选择一张喜欢的壁纸，剩下的交给 DuckNorch。"
     @Published var error: String?
     @Published var folder: URL
     @Published var details = ""
@@ -33,7 +33,7 @@ enum ProjectInfo {
         else {
             folder = (FileManager.default.urls(for: .picturesDirectory, in: .userDomainMask).first
                       ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Pictures"))
-                .appendingPathComponent("DuckNorth", isDirectory: true)
+                .appendingPathComponent("DuckNorch", isDirectory: true)
         }
     }
 
@@ -125,7 +125,7 @@ enum ProjectInfo {
                 .imageScaling: NSImageScaling.scaleAxesIndependently.rawValue,
                 .allowClipping: false
             ])
-            status = "已设为桌面壁纸，现在可以关闭 DuckNorth。"
+            status = "已设为桌面壁纸，现在可以关闭 DuckNorch。"
             error = nil
         } catch {
             self.error = "PNG 已保存，但设置桌面壁纸失败：\(error.localizedDescription)"
@@ -159,9 +159,9 @@ struct ContentView: View {
                 Image(nsImage: ProjectInfo.icon).resizable().scaledToFit()
                     .frame(width: 72, height: 72)
                     .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .accessibilityLabel("DuckNorth 图标")
-                VStack(alignment: .center, spacing: 5) {
-                    Text("DuckNorth").font(.system(size: 29, weight: .semibold))
+                    .accessibilityLabel("DuckNorch 图标")
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("DuckNorch").font(.system(size: 29, weight: .semibold))
                     Text("让刘海融入壁纸").font(.system(size: 15)).foregroundStyle(.secondary)
                 }
             }
@@ -211,21 +211,24 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity).multilineTextAlignment(.center)
                     .accessibilityLabel(model.status)
             }
-            VStack(spacing: 10) {
+            VStack(alignment: .center, spacing: 10) {
                 Button(action: model.applyWallpaper) {
                     Label("设为桌面壁纸", systemImage: "desktopcomputer")
-                        .font(.system(size: 18, weight: .semibold))
-                        .frame(maxWidth: .infinity, minHeight: 58)
+                        .font(.system(size: 22, weight: .semibold))
+                        .frame(minHeight: 70)
+                        .padding(.horizontal, 32)
                 }.buttonStyle(.borderedProminent).tint(accent).controlSize(.large)
                     .disabled(model.output == nil || model.busy)
                     .keyboardShortcut(.return, modifiers: [])
                 Button(action: model.reveal) {
                     Label("在访达中显示", systemImage: "folder")
-                        .font(.system(size: 14, weight: .medium))
-                        .frame(maxWidth: .infinity, minHeight: 46)
+                        .font(.system(size: 16, weight: .medium))
+                        .frame(minHeight: 46)
+                        .padding(.horizontal, 18)
                 }.buttonStyle(.bordered).controlSize(.large)
                     .disabled(model.output == nil || model.busy)
             }
+            .frame(maxWidth: .infinity, alignment: .center)
             Divider()
             HStack(spacing: 10) {
                 Image(systemName: "folder").foregroundStyle(.secondary)
@@ -246,7 +249,7 @@ struct ContentView: View {
         }
         .padding(28).frame(width: 650)
         .background(Color(nsColor: .windowBackgroundColor))
-        .alert("DuckNorth", isPresented: Binding(get: { model.error != nil }, set: { if !$0 { model.error = nil } })) {
+        .alert("DuckNorch", isPresented: Binding(get: { model.error != nil }, set: { if !$0 { model.error = nil } })) {
             Button("好", role: .cancel) { model.error = nil }
         } message: { Text(model.error ?? "") }
     }
@@ -258,7 +261,7 @@ struct AboutView: View {
             Image(nsImage: ProjectInfo.icon).resizable().scaledToFit()
                 .frame(width: 112, height: 112)
                 .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                .accessibilityLabel("DuckNorth 图标")
+                .accessibilityLabel("DuckNorch 图标")
             VStack(spacing: 6) {
                 Text(ProjectInfo.name).font(.system(size: 25, weight: .semibold))
                 Text("版本 \(ProjectInfo.version)").font(.system(size: 13)).foregroundStyle(.secondary)
@@ -266,7 +269,7 @@ struct AboutView: View {
             VStack(spacing: 14) {
                 VStack(spacing: 4) {
                     Text("项目链接").font(.system(size: 12)).foregroundStyle(.secondary)
-                    Link("github.com/LynnWang2/DuckNorth", destination: ProjectInfo.projectURL)
+                    Link("github.com/LynnWang2/DuckNorch", destination: ProjectInfo.projectURL)
                 }
                 VStack(spacing: 4) {
                     Text("原项目链接").font(.system(size: 12)).foregroundStyle(.secondary)
@@ -296,7 +299,7 @@ struct AboutView: View {
         let hosting = NSHostingView(rootView: ContentView(model: model))
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 650, height: 620),
                           styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
-        window.title = "DuckNorth"
+        window.title = "DuckNorch"
         window.contentView = hosting
         window.setContentSize(hosting.fittingSize)
         window.center()
@@ -326,7 +329,7 @@ struct AboutView: View {
         let view = NSHostingView(rootView: AboutView())
         let panel = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 420, height: 430),
                              styleMask: [.titled, .closable], backing: .buffered, defer: false)
-        panel.title = "关于 DuckNorth"
+        panel.title = "关于 DuckNorch"
         panel.contentView = view
         panel.setContentSize(view.fittingSize)
         panel.isReleasedWhenClosed = false
@@ -337,11 +340,11 @@ struct AboutView: View {
     private func makeMenus() {
         let bar = NSMenu()
         let app = NSMenu()
-        app.addItem(withTitle: "关于 DuckNorth", action: #selector(about), keyEquivalent: "").target = self
+        app.addItem(withTitle: "关于 DuckNorch", action: #selector(about), keyEquivalent: "").target = self
         app.addItem(.separator())
-        app.addItem(withTitle: "隐藏 DuckNorth", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        app.addItem(withTitle: "隐藏 DuckNorch", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
         app.addItem(.separator())
-        app.addItem(withTitle: "退出 DuckNorth", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        app.addItem(withTitle: "退出 DuckNorch", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         let appItem = NSMenuItem(); appItem.submenu = app; bar.addItem(appItem)
         let file = NSMenu(title: "文件")
         file.addItem(withTitle: "选择壁纸…", action: #selector(choose), keyEquivalent: "o").target = self
@@ -350,14 +353,14 @@ struct AboutView: View {
         file.addItem(withTitle: "关闭窗口", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
         let fileItem = NSMenuItem(title: "文件", action: nil, keyEquivalent: ""); fileItem.submenu = file; bar.addItem(fileItem)
         let help = NSMenu(title: "帮助")
-        help.addItem(withTitle: "DuckNorth 使用说明", action: #selector(self.help), keyEquivalent: "").target = self
+        help.addItem(withTitle: "DuckNorch 使用说明", action: #selector(self.help), keyEquivalent: "").target = self
         let helpItem = NSMenuItem(title: "帮助", action: nil, keyEquivalent: ""); helpItem.submenu = help; bar.addItem(helpItem)
         NSApp.mainMenu = bar
     }
 }
 
 #if !DUCKNORTH_TESTING
-@main struct DuckNorthMain {
+@main struct DuckNorchMain {
     @MainActor static func main() {
         let application = NSApplication.shared
         let delegate = AppDelegate()

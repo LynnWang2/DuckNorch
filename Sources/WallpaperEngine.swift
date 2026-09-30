@@ -29,7 +29,7 @@ struct ScreenGeometry: Sendable, Equatable {
     }
 }
 
-enum DuckNorthError: LocalizedError {
+enum DuckNorchError: LocalizedError {
     case message(String)
     var errorDescription: String? { if case .message(let text) = self { return text }; return nil }
 }
@@ -42,13 +42,13 @@ enum WallpaperEngine {
               let rawWidth = props[kCGImagePropertyPixelWidth] as? Int,
               let rawHeight = props[kCGImagePropertyPixelHeight] as? Int,
               rawWidth > 0, rawHeight > 0 else {
-            throw DuckNorthError.message("无法读取这张图片。请选择有效的 JPG、PNG、HEIC 或 TIFF 图片。")
+            throw DuckNorchError.message("无法读取这张图片。请选择有效的 JPG、PNG、HEIC 或 TIFF 图片。")
         }
         let width = geometry.width, height = geometry.height
         guard width > 2, height > 2, width <= 16384, height <= 16384,
               geometry.strip.isFinite, geometry.strip >= 0, geometry.strip < CGFloat(height - 2),
               geometry.radius.isFinite, geometry.radius > 0 else {
-            throw DuckNorthError.message("无法获取有效的屏幕尺寸，请重新打开 DuckNorth。")
+            throw DuckNorchError.message("无法获取有效的屏幕尺寸，请重新打开 DuckNorch。")
         }
         // ImageIO applies camera orientation, and downsamples large photos before decoding.
         let orientation = props[kCGImagePropertyOrientation] as? Int ?? 1
@@ -66,7 +66,7 @@ enum WallpaperEngine {
               let context = CGContext(data: nil, width: width, height: height,
                                       bitsPerComponent: 8, bytesPerRow: 0, space: colorSpace,
                                       bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else {
-            throw DuckNorthError.message("无法处理这张图片，可能是文件损坏或可用内存不足。")
+            throw DuckNorchError.message("无法处理这张图片，可能是文件损坏或可用内存不足。")
         }
         let canvas = CGRect(x: 0, y: 0, width: width, height: height)
         context.setFillColor(CGColor(gray: 0, alpha: 1))
@@ -84,7 +84,7 @@ enum WallpaperEngine {
         context.interpolationQuality = .high
         context.draw(image, in: drawn)
         guard let rendered = context.makeImage() else {
-            throw DuckNorthError.message("生成壁纸失败，请重试。")
+            throw DuckNorchError.message("生成壁纸失败，请重试。")
         }
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let formatter = DateFormatter()
@@ -97,11 +97,11 @@ enum WallpaperEngine {
         defer { try? FileManager.default.removeItem(at: temporary) }
         guard let destination = CGImageDestinationCreateWithURL(temporary as CFURL,
                                                                 UTType.png.identifier as CFString, 1, nil) else {
-            throw DuckNorthError.message("无法写入保存文件夹，请选择其他文件夹。")
+            throw DuckNorchError.message("无法写入保存文件夹，请选择其他文件夹。")
         }
         CGImageDestinationAddImage(destination, rendered, nil)
         guard CGImageDestinationFinalize(destination) else {
-            throw DuckNorthError.message("保存 PNG 失败，请检查剩余空间及文件夹权限。")
+            throw DuckNorchError.message("保存 PNG 失败，请检查剩余空间及文件夹权限。")
         }
         // moveItem refuses to replace an existing file; the original is never opened for writing.
         try FileManager.default.moveItem(at: temporary, to: output)
