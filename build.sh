@@ -8,7 +8,7 @@ swiftc -O -whole-module-optimization -parse-as-library -target arm64-apple-macos
     Sources/WallpaperEngine.swift Sources/DuckNorthApp.swift \
     -o "$destination/DuckNorth.app/Contents/MacOS/DuckNorth"
 cp Resources/Info.plist "$destination/DuckNorth.app/Contents/Info.plist"
-cp Resources/Upstream-LICENSE Resources/使用说明.txt Resources/AppIcon.png \
+cp LICENSE Resources/Upstream-LICENSE Resources/使用说明.txt Resources/AppIcon.png \
     "$destination/DuckNorth.app/Contents/Resources/"
 swift Tools/MakeIcon.swift Resources/AppIcon.png work/DuckNorth.iconset
 iconutil -c icns work/DuckNorth.iconset -o "$destination/DuckNorth.app/Contents/Resources/DuckNorth.icns"
