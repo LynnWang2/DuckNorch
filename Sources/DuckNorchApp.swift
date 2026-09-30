@@ -21,7 +21,7 @@ enum ProjectInfo {
     @Published var preview: NSImage?
     @Published var busy = false
     @Published var targeted = false
-    @Published var status = "选择一张喜欢的壁纸，剩下的交给 DuckNorch。"
+    @Published var status = ""
     @Published var error: String?
     @Published var folder: URL
     @Published var details = ""
@@ -198,18 +198,22 @@ struct ContentView: View {
             .accessibilityAction { model.chooseImage() }
 
             VStack(alignment: .center, spacing: 6) {
-                Text(model.input?.lastPathComponent ?? "顶部纯黑 · 系统圆角 · 自动适配主屏幕")
+                if let input = model.input {
+                    Text(input.lastPathComponent)
                     .font(.system(size: 13, weight: .medium))
                     .lineLimit(1).truncationMode(.middle)
                     .frame(maxWidth: .infinity)
                     .multilineTextAlignment(.center)
+                }
                 if !model.details.isEmpty {
                     Text(model.details).font(.system(size: 12)).foregroundStyle(.secondary)
                         .lineLimit(1).frame(maxWidth: .infinity).multilineTextAlignment(.center)
                 }
-                Text(model.status).font(.system(size: 13)).foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity).multilineTextAlignment(.center)
-                    .accessibilityLabel(model.status)
+                if !model.status.isEmpty {
+                    Text(model.status).font(.system(size: 13)).foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity).multilineTextAlignment(.center)
+                        .accessibilityLabel(model.status)
+                }
             }
             VStack(alignment: .center, spacing: 10) {
                 Button(action: model.applyWallpaper) {
@@ -242,7 +246,7 @@ struct ContentView: View {
             .frame(maxWidth: .infinity, minHeight: 50)
             .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.primary.opacity(0.12), lineWidth: 1))
-            Text("原图不覆盖，每次生成独立 PNG。关闭窗口即退出，无需后台运行。")
+            Text("顶部纯黑 · 系统圆角 · 自动适配主屏幕")
                 .font(.system(size: 12)).foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center).frame(maxWidth: .infinity)
         }
