@@ -188,7 +188,9 @@ struct ContentView: View {
                 RoundedRectangle(cornerRadius: 18).strokeBorder(model.targeted ? accent : Color.primary.opacity(0.09),
                                                                 style: StrokeStyle(lineWidth: model.targeted ? 2 : 1, dash: model.preview == nil ? [6, 4] : []))
             }
-            .frame(height: 270)
+            .frame(maxWidth: 480)
+            .aspectRatio(16.0 / 10.0, contentMode: .fit)
+            .frame(maxWidth: .infinity)
             .contentShape(RoundedRectangle(cornerRadius: 18))
             .onDrop(of: [.fileURL], isTargeted: $model.targeted, perform: model.receive)
             .onTapGesture { if !model.busy { model.chooseImage() } }
@@ -250,7 +252,7 @@ struct ContentView: View {
                 .font(.system(size: 12)).foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center).frame(maxWidth: .infinity)
         }
-        .padding(28).frame(width: 650)
+        .padding(28).frame(width: 560)
         .background(Color(nsColor: .windowBackgroundColor))
         .alert("DuckNorch", isPresented: Binding(get: { model.error != nil }, set: { if !$0 { model.error = nil } })) {
             Button("好", role: .cancel) { model.error = nil }
