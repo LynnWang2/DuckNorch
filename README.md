@@ -5,7 +5,7 @@
 
 ## 下载与使用
 
-从 [Releases](https://github.com/LynnWang2/DuckNorth/releases/latest) 下载 `DuckNorth-1.0.0-macOS27-arm64.zip`，解压后打开 `DuckNorth.app`，也可以将它拖入“应用程序”文件夹。
+从 [Releases](https://github.com/LynnWang2/DuckNorth/releases/latest) 下载 `DuckNorth-1.0.1-macOS27-arm64.zip`，解压后打开 `DuckNorth.app`，也可以将它拖入“应用程序”文件夹。
 
 1. 拖入图片，或点击“选择壁纸…”。
 2. 自动生成并预览 PNG；点击“设为桌面壁纸”应用。

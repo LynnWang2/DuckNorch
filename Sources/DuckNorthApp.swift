@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 
 enum ProjectInfo {
     static let name = "DuckNorth"
-    static let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
+    static let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.1"
     static let projectURL = URL(string: "https://github.com/LynnWang2/DuckNorth")!
     static let upstreamURL = URL(string: "https://github.com/mezhevikin/norch")!
     static let licenseURL = URL(string: "https://github.com/LynnWang2/DuckNorth/blob/main/LICENSE")!
@@ -157,13 +157,19 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .center, spacing: 14) {
                 Image(nsImage: ProjectInfo.icon).resizable().scaledToFit()
-                    .frame(width: 58, height: 58).accessibilityLabel("DuckNorth 图标")
+                    .frame(width: 58, height: 58)
+                    .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    .accessibilityLabel("DuckNorth 图标")
                 VStack(alignment: .leading, spacing: 5) {
                     Text("DuckNorth").font(.system(size: 27, weight: .semibold))
                     Text("让刘海融入壁纸").font(.system(size: 13)).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Button(model.input == nil ? "选择壁纸…" : "换一张…", action: model.chooseImage)
+                    .font(.system(size: 14, weight: .semibold))
+                    .controlSize(.large)
+                    .padding(.horizontal, 8)
+                    .frame(minHeight: 48)
                     .disabled(model.busy).keyboardShortcut("o", modifiers: .command)
             }
 
@@ -193,36 +199,52 @@ struct ContentView: View {
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { model.chooseImage() }
 
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text(model.input?.lastPathComponent ?? "顶部纯黑 · 系统圆角 · 自动适配主屏幕")
-                        .font(.system(size: 12, weight: .medium)).lineLimit(1).truncationMode(.middle)
-                    Spacer()
-                    Text(model.details).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+            VStack(alignment: .center, spacing: 6) {
+                Text(model.input?.lastPathComponent ?? "顶部纯黑 · 系统圆角 · 自动适配主屏幕")
+                    .font(.system(size: 13, weight: .medium))
+                    .lineLimit(1).truncationMode(.middle)
+                    .frame(maxWidth: .infinity)
+                    .multilineTextAlignment(.center)
+                if !model.details.isEmpty {
+                    Text(model.details).font(.system(size: 12)).foregroundStyle(.secondary)
+                        .lineLimit(1).frame(maxWidth: .infinity).multilineTextAlignment(.center)
                 }
-                Text(model.status).font(.system(size: 12)).foregroundStyle(.secondary)
+                Text(model.status).font(.system(size: 13)).foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity).multilineTextAlignment(.center)
                     .accessibilityLabel(model.status)
             }
-            HStack(spacing: 12) {
+            VStack(spacing: 10) {
                 Button(action: model.applyWallpaper) {
-                    Label("设为桌面壁纸", systemImage: "desktopcomputer").padding(.horizontal, 10)
+                    Label("设为桌面壁纸", systemImage: "desktopcomputer")
+                        .font(.system(size: 18, weight: .semibold))
+                        .frame(maxWidth: .infinity, minHeight: 58)
                 }.buttonStyle(.borderedProminent).tint(accent).controlSize(.large)
                     .disabled(model.output == nil || model.busy)
                     .keyboardShortcut(.return, modifiers: [])
-                Button("在访达中显示", action: model.reveal).controlSize(.large)
+                Button(action: model.reveal) {
+                    Label("在访达中显示", systemImage: "folder")
+                        .font(.system(size: 14, weight: .medium))
+                        .frame(maxWidth: .infinity, minHeight: 46)
+                }.buttonStyle(.bordered).controlSize(.large)
                     .disabled(model.output == nil || model.busy)
-                Spacer()
             }
             Divider()
-            HStack(spacing: 6) {
+            HStack(spacing: 10) {
                 Image(systemName: "folder").foregroundStyle(.secondary)
                 Text("保存到：\(model.folder.path.replacingOccurrences(of: FileManager.default.homeDirectoryForCurrentUser.path, with: "~"))")
                     .lineLimit(1).truncationMode(.middle).help(model.folder.path)
                 Spacer(minLength: 8)
-                Button("更改…", action: model.chooseFolder).buttonStyle(.link).disabled(model.busy)
-            }.font(.system(size: 11)).foregroundStyle(.secondary)
+                Button("更改…", action: model.chooseFolder).controlSize(.large)
+                    .disabled(model.busy)
+            }
+            .font(.system(size: 12)).foregroundStyle(.secondary)
+            .padding(.horizontal, 14).padding(.vertical, 10)
+            .frame(maxWidth: .infinity, minHeight: 50)
+            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.primary.opacity(0.12), lineWidth: 1))
             Text("原图不覆盖，每次生成独立 PNG。关闭窗口即退出，无需后台运行。")
-                .font(.system(size: 11)).foregroundStyle(.tertiary)
+                .font(.system(size: 12)).foregroundStyle(.tertiary)
+                .multilineTextAlignment(.center).frame(maxWidth: .infinity)
         }
         .padding(28).frame(width: 650)
         .background(Color(nsColor: .windowBackgroundColor))
@@ -236,7 +258,9 @@ struct AboutView: View {
     var body: some View {
         VStack(alignment: .center, spacing: 16) {
             Image(nsImage: ProjectInfo.icon).resizable().scaledToFit()
-                .frame(width: 112, height: 112).accessibilityLabel("DuckNorth 图标")
+                .frame(width: 112, height: 112)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .accessibilityLabel("DuckNorth 图标")
             VStack(spacing: 6) {
                 Text(ProjectInfo.name).font(.system(size: 25, weight: .semibold))
                 Text("版本 \(ProjectInfo.version)").font(.system(size: 13)).foregroundStyle(.secondary)

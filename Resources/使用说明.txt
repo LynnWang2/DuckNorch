@@ -1,4 +1,4 @@
-DuckNorth 1.0.0
+DuckNorth 1.0.1
 
 需要 Apple Silicon（M 系列芯片）及 macOS 27 或更新版本。
 
